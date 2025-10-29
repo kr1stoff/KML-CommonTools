@@ -68,76 +68,6 @@ class SimulateFastqByVcf:
         # 检查参考基因组 fasta 文件, 区域, vcf 序列 id 是否一致
         self.check_ref_id()
 
-    def simulate_wild_type(self):
-        """仅模拟参考基因组序列的测序数据, 输出双端 fastq 文件"""
-        logging.info("仅模拟参考基因组序列的测序数据, 输出双端 fastq 文件")
-        # 检查参考基因组 fasta 文件, 区域是否一致
-        cmd = f"""#!/bin/bash
-# 模拟数据
-{DWGSIM} -y 0 -e 0 -E 0 -r 0 -R 0 -N 10000 -1 {self.read_length} -2 {self.read_length} \
-    {self.input_ref} \
-    {self.tmpdir}/dwgsim
-# 比对数据
-{BWA} mem -t {self.threads} -M -Y -R '@RG\\tID:{self.name}\\tPL:illumina\\tSM:{self.name}' \
-    {self.input_ref} \
-    {self.tmpdir}/dwgsim.bwa.read1.fastq.gz \
-    {self.tmpdir}/dwgsim.bwa.read2.fastq.gz \
-    | {SAMTOOLS} view -@ 4 -hbS - \
-    | {SAMTOOLS} sort -@ 4 -o {self.tmpdir}/{self.name}.bam - 
-{SAMTOOLS} index {self.tmpdir}/{self.name}.bam
-# 圈定 target 区域
-{SAMTOOLS} view -h {self.tmpdir}/{self.name}.bam {self.region} \
-    | perl {self.filter_paired_reads_script} \
-    > {self.tmpdir}/{self.name}.target.sam
-# 提取 target 区域的 fastq 文件
-{SAMTOOLS} fastq -1 {self.tmpdir}/{self.name}_target_reads_align.1.fq.gz \
-    -2 {self.tmpdir}/{self.name}_target_reads_align.2.fq.gz \
-    {self.tmpdir}/{self.name}.target.sam
-# 重复, 改序列名称, 并排序
-# ! 数据量如果超过 1G, 酌情调整 times 参数
-# read1
-{SEQKIT} dup --times 2000 \
-    {self.tmpdir}/{self.name}_target_reads_align.1.fq.gz \
-    --out-file {self.tmpdir}/{self.name}_target_reads_dupfq.raw1.1.fq.gz
-{SEQKIT} rename \
-    {self.tmpdir}/{self.name}_target_reads_dupfq.raw1.1.fq.gz \
-    --out-file {self.tmpdir}/{self.name}_target_reads_dupfq.raw2.1.fq.gz
-{SEQKIT} sort --threads {self.threads} --by-name \
-    {self.tmpdir}/{self.name}_target_reads_dupfq.raw2.1.fq.gz \
-    --out-file {self.tmpdir}/{self.name}_target_reads_dupfq.1.fq.gz
-# read2
-{SEQKIT} dup --times 2000 \
-    {self.tmpdir}/{self.name}_target_reads_align.2.fq.gz \
-    --out-file {self.tmpdir}/{self.name}_target_reads_dupfq.raw1.2.fq.gz
-{SEQKIT} rename \
-    {self.tmpdir}/{self.name}_target_reads_dupfq.raw1.2.fq.gz \
-    --out-file {self.tmpdir}/{self.name}_target_reads_dupfq.raw2.2.fq.gz
-{SEQKIT} sort --threads {self.threads} --by-name \
-    {self.tmpdir}/{self.name}_target_reads_dupfq.raw2.2.fq.gz \
-    --out-file {self.tmpdir}/{self.name}_target_reads_dupfq.2.fq.gz
-# 野生型
-{SEQTK} sample \
-    {self.tmpdir}/{self.name}_target_reads_dupfq.1.fq.gz \
-    {self.single_read_num} | \
-    gzip --force > {self.out_read1}
-{SEQTK} sample \
-    {self.tmpdir}/{self.name}_target_reads_dupfq.2.fq.gz \
-    {self.single_read_num} | \
-    gzip --force > {self.out_read2}
-"""
-        # 执行命令
-        self.write_and_run_cmd(cmd)
-
-    def write_and_run_cmd(self, cmd: str) -> None:
-        """写入并运行 bash 命令"""
-        with open(self.tmpdir / "simulate.sh", "w") as f:
-            f.write(cmd)
-        res = subprocess.run(f"bash {self.tmpdir / 'simulate.sh'}",
-                             shell=True, check=True, capture_output=True, text=True)
-        # 标准输出和标准错误
-        with open(self.tmpdir / "simulate.log", "w") as f:
-            f.write(res.stdout + '\n' + res.stderr)
-
     def check_ref_id(self) -> None:
         """检查参考基因组 fasta 文件, 区域, vcf 序列 id 是否一致"""
         logging.info("检查参考基因组 fasta 文件, 区域, vcf 序列 id 是否一致")
@@ -160,11 +90,145 @@ class SimulateFastqByVcf:
         if (self.out_read1.stat().st_size > 100) and (self.out_read2.stat().st_size > 100):
             shutil.rmtree(self.tmpdir)
 
+    def simulate_wild_type(self):
+        """仅模拟参考基因组序列的测序数据, 输出双端 fastq 文件"""
+        logging.info("仅模拟参考基因组序列的测序数据, 输出双端 fastq 文件")
+        # 检查参考基因组 fasta 文件, 区域是否一致
+        cmd = f"""#!/bin/bash
+# 模拟数据
+{DWGSIM} -y 0 -e 0 -E 0 -r 0 -R 0 -N 10000 -1 {self.read_length} -2 {self.read_length} \
+    {self.input_ref} \
+    {self.tmpdir}/dwgsim
+# 比对数据
+{BWA} mem -t {self.threads} -M -Y -R '@RG\\tID:{self.name}\\tPL:illumina\\tSM:{self.name}' \
+    {self.input_ref} \
+    {self.tmpdir}/dwgsim.bwa.read1.fastq.gz \
+    {self.tmpdir}/dwgsim.bwa.read2.fastq.gz \
+    | {SAMTOOLS} view -@ 4 -hbS - \
+    | {SAMTOOLS} sort -@ 4 -o {self.tmpdir}/align.bam - 
+{SAMTOOLS} index {self.tmpdir}/align.bam
+# 圈定 target 区域
+{SAMTOOLS} view -h {self.tmpdir}/align.bam {self.region} \
+    | perl {self.filter_paired_reads_script} \
+    > {self.tmpdir}/target.sam
+# 提取 target 区域的 fastq 文件
+{SAMTOOLS} fastq \
+    -1 {self.tmpdir}/target_reads_align.1.fq.gz \
+    -2 {self.tmpdir}/target_reads_align.2.fq.gz \
+    {self.tmpdir}/target.sam
+# 重复, 改序列名称, 并排序
+# ! 数据量如果超过 1G, 酌情调整 times 参数
+# read1
+{SEQKIT} dup --times 2000 \
+    {self.tmpdir}/target_reads_align.1.fq.gz \
+    --out-file {self.tmpdir}/target_reads_dupfq.raw1.1.fq.gz
+{SEQKIT} rename \
+    {self.tmpdir}/target_reads_dupfq.raw1.1.fq.gz \
+    --out-file {self.tmpdir}/target_reads_dupfq.raw2.1.fq.gz
+{SEQKIT} sort --threads {self.threads} --by-name \
+    {self.tmpdir}/target_reads_dupfq.raw2.1.fq.gz \
+    --out-file {self.tmpdir}/target_reads_dupfq.1.fq.gz
+# read2
+{SEQKIT} dup --times 2000 \
+    {self.tmpdir}/target_reads_align.2.fq.gz \
+    --out-file {self.tmpdir}/target_reads_dupfq.raw1.2.fq.gz
+{SEQKIT} rename \
+    {self.tmpdir}/target_reads_dupfq.raw1.2.fq.gz \
+    --out-file {self.tmpdir}/target_reads_dupfq.raw2.2.fq.gz
+{SEQKIT} sort --threads {self.threads} --by-name \
+    {self.tmpdir}/target_reads_dupfq.raw2.2.fq.gz \
+    --out-file {self.tmpdir}/target_reads_dupfq.2.fq.gz
+# 野生型
+{SEQTK} sample \
+    {self.tmpdir}/target_reads_dupfq.1.fq.gz \
+    {self.single_read_num} | \
+    gzip --force > {self.out_read1}
+{SEQTK} sample \
+    {self.tmpdir}/target_reads_dupfq.2.fq.gz \
+    {self.single_read_num} | \
+    gzip --force > {self.out_read2}
+"""
+        # 执行命令
+        self.write_and_run_cmd(cmd)
+
+    def simulate_hom(self):
+        """模拟纯合变异, 输出双端 fastq 文件"""
+        logging.info("模拟纯合变异, 输出双端 fastq 文件")
+        cmd = f"""#!/bin/bash
+# 模拟数据
+{DWGSIM} -N 10000 -y 0 -e 0 -E 0 -r 0 -R 0 -1 {self.read_length} -2 {self.read_length} \
+    -v {self.input_vcf} \
+    {self.input_ref} \
+    {self.tmpdir}/dwgsim
+# 比对数据
+{BWA} mem -t {self.threads} -M -Y -R '@RG\\tID:{self.name}\\tPL:illumina\\tSM:{self.name}' \
+    {self.input_ref} \
+    {self.tmpdir}/dwgsim.bwa.read1.fastq.gz \
+    {self.tmpdir}/dwgsim.bwa.read2.fastq.gz \
+    | {SAMTOOLS} view -@ {self.threads} -hbS - \
+    | {SAMTOOLS} sort -@ {self.threads} -o {self.tmpdir}/align.bam -
+{SAMTOOLS} index {self.tmpdir}/align.bam
+# 圈定 target 区域
+{SAMTOOLS} view -h {self.tmpdir}/align.bam {self.region} \
+    | perl {self.filter_paired_reads_script} \
+    > {self.tmpdir}/target.sam 
+# 提取 target 区域的 fastq 文件
+{SAMTOOLS} fastq \
+    -1 {self.tmpdir}/target_reads_align.1.fq.gz \
+    -2 {self.tmpdir}/target_reads_align.2.fq.gz \
+    {self.tmpdir}/target.sam
+# 重复, 改序列名称, 并排序
+# ! 数据量如果超过 1G, 酌情调整 times 参数
+# read1
+{SEQKIT} dup --times 2000 \
+    {self.tmpdir}/target_reads_align.1.fq.gz \
+    --out-file {self.tmpdir}/target_reads_dupfq.raw1.1.fq.gz
+{SEQKIT} rename \
+    {self.tmpdir}/target_reads_dupfq.raw1.1.fq.gz \
+    --out-file {self.tmpdir}/target_reads_dupfq.raw2.1.fq.gz
+{SEQKIT} sort --threads {self.threads} --by-name \
+    {self.tmpdir}/target_reads_dupfq.raw2.1.fq.gz \
+    --out-file {self.tmpdir}/target_reads_dupfq.1.fq.gz
+# read2
+{SEQKIT} dup --times 2000 \
+    {self.tmpdir}/target_reads_align.2.fq.gz \
+    --out-file {self.tmpdir}/target_reads_dupfq.raw1.2.fq.gz
+{SEQKIT} rename \
+    {self.tmpdir}/target_reads_dupfq.raw1.2.fq.gz \
+    --out-file {self.tmpdir}/target_reads_dupfq.raw2.2.fq.gz
+{SEQKIT} sort --threads {self.threads} --by-name \
+    {self.tmpdir}/target_reads_dupfq.raw2.2.fq.gz \
+    --out-file {self.tmpdir}/target_reads_dupfq.2.fq.gz
+# 纯合变异性
+{SEQTK} sample \
+    {self.tmpdir}/target_reads_dupfq.1.fq.gz \
+    {self.single_read_num} | \
+    gzip --force > {self.out_read1}
+{SEQTK} sample \
+    {self.tmpdir}/target_reads_dupfq.2.fq.gz \
+    {self.single_read_num} | \
+    gzip --force > {self.out_read2}
+"""
+        # 执行命令
+        self.write_and_run_cmd(cmd)
+
+    def write_and_run_cmd(self, cmd: str) -> None:
+        """写入并运行 bash 命令"""
+        with open(self.tmpdir / "simulate.sh", "w") as f:
+            f.write(cmd)
+        res = subprocess.run(f"bash {self.tmpdir / 'simulate.sh'}",
+                             shell=True, check=True, capture_output=True, text=True)
+        # 标准输出和标准错误
+        with open(self.tmpdir / "simulate.log", "w") as f:
+            f.write(res.stdout + '\n' + res.stderr)
+
     def simulate(self):
         """模拟测序数据"""
         if self.wild_type:
             self.simulate_wild_type()
-        # todo 模拟纯合&杂合突变
+        elif self.variant_allele_freq == 1:
+            self.simulate_hom()
+        # todo 模拟杂合突变
         self.remove_temporary_dir()
 
 
