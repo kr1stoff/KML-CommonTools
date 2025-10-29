@@ -1,0 +1,5 @@
+DWGSIM = "/home/mengxf/miniforge3/envs/basic2/bin/dwgsim"
+BWA = "/home/mengxf/miniforge3/envs/basic/bin/bwa"
+SAMTOOLS = "/home/mengxf/miniforge3/envs/basic/bin/samtools"
+SEQKIT = "/home/mengxf/miniforge3/envs/basic/bin/seqkit"
+SEQTK = "/home/mengxf/miniforge3/envs/basic/bin/seqtk"
