@@ -229,7 +229,8 @@ class SimulateFastqByVcf:
         elif self.variant_allele_freq == 1:
             self.simulate_hom()
         # todo 模拟杂合突变
-        self.remove_temporary_dir()
+        # todo 开发完解除注释
+        # self.remove_temporary_dir()
 
 
 if __name__ == "__main__":
