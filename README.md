@@ -5,6 +5,7 @@
 - dl_seq_by_efetch: 通过 NCBI EFetch 下载序列
 - prep_input_from_bcl2fastq: 从 bcl2fastq 结果文件夹中提取样本信息，生成通用分析流程输入文件
 - merge_bcl2fastq_lanes: 合并 bcl2fastq 生成的不同 lane 的 fastq 文件
+- simu_fq_by_vcf: 使用 vcf 模拟 fastq 文件
   - 野生型
 
     ```bash
