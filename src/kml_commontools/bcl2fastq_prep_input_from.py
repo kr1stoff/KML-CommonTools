@@ -1,6 +1,8 @@
 import click
 from pathlib import Path
+import logging
 
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 @click.command()
 @click.option("--input-dir", type=click.Path(exists=True), required=True,
@@ -8,6 +10,9 @@ from pathlib import Path
 @click.option("--output-file", default="input.tsv", show_default=True, help="慢病毒分析流程输入文件")
 @click.help_option("--help", help="显示帮助信息并退出")
 def prepare_input_from_bcl2fastq(input_dir: str, output_file: str):
+    """从 bcl2fastq 结果文件夹中提取样本信息，生成通用分析流程输入文件"""
+    logging.info(f"从 bcl2fastq 结果文件夹 {input_dir} 中提取样本信息，生成通用分析流程输入文件 {output_file}")
+
     fqdict = {}
     for fq in Path(input_dir).resolve().glob("*.fastq.gz"):
         if "Undetermined" in fq.name:
@@ -21,6 +26,8 @@ def prepare_input_from_bcl2fastq(input_dir: str, output_file: str):
     with open(output_file, "w") as f:
         for k, v in sorted(fqdict.items()):
             f.write(f"{k}\t{v["read1"]}\t{v["read2"]}\n")
+            
+    logging.info(f"完成，共处理 {len(fqdict)} 个样本")
 
 
 if __name__ == "__main__":
