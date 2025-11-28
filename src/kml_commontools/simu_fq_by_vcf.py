@@ -11,7 +11,8 @@ from Bio import SeqIO
 from src.config.software import DWGSIM, SAMTOOLS, BWA, SEQTK, SEQKIT
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
+logging.basicConfig(level=logging.INFO,
+                    format="%(asctime)s %(levelname)s: %(message)s")
 
 
 @click.command()
@@ -62,7 +63,8 @@ class SimulateFastqByVcf:
         self.tmpdir.mkdir(parents=True, exist_ok=True)
         self.filter_paired_reads_script = Path(__file__).parents[1] / \
             "util/simu_fq_by_vcf-filter_paired_reads_by_qname.pl"
-        self.single_read_num = math.ceil(self.data_volumn / self.read_length / 2)
+        self.single_read_num = math.ceil(
+            self.data_volumn / self.read_length / 2)
         self.out_read1 = Path(f"{self.output_prefix}_1.fq.gz")
         self.out_read2 = Path(f"{self.output_prefix}_2.fq.gz")
         # 检查参考基因组 fasta 文件, 区域, vcf 序列 id 是否一致
@@ -228,8 +230,8 @@ class SimulateFastqByVcf:
             self.simulate_wild_type()
         elif self.variant_allele_freq == 1:
             self.simulate_hom()
-        # todo 模拟杂合突变
-        # todo 开发完解除注释
+        # TODO 模拟杂合突变
+        # TODO 开发完解除注释
         # self.remove_temporary_dir()
 
 
