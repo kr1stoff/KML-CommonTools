@@ -29,7 +29,7 @@ logging.basicConfig(level=logging.INFO,
 @click.help_option("--help", help="显示帮助信息并退出")
 def simulate_fastq_by_vcf(input_ref, input_vcf, output_prefix, wild_type, variant_allele_freq,
                           region, data_volumn, read_length, threads):
-    """通过参考基因组 fasta 文件和变异 vcf 文件模拟测序数据, 输出双端 fastq 文件"""
+    """(仅适用于细菌病毒等小型基因组) 通过参考基因组 fasta 文件和变异 vcf 文件模拟测序数据, 输出双端 fastq 文件"""
     simu_fq_by_vcf = SimulateFastqByVcf(
         input_ref=input_ref,
         output_prefix=output_prefix,
@@ -119,7 +119,7 @@ class SimulateFastqByVcf:
     -2 {self.tmpdir}/target_reads_align.2.fq.gz \
     {self.tmpdir}/target.sam
 # 重复, 改序列名称, 并排序
-# ! 数据量如果超过 1G, 酌情调整 times 参数
+# ! 数据量如果超过 3G, 酌情调整 times 参数
 # read1
 {SEQKIT} dup --times 2000 \
     {self.tmpdir}/target_reads_align.1.fq.gz \
@@ -180,7 +180,6 @@ class SimulateFastqByVcf:
     -2 {self.tmpdir}/target_reads_align.2.fq.gz \
     {self.tmpdir}/target.sam
 # 重复, 改序列名称, 并排序
-# ! 数据量如果超过 1G, 酌情调整 times 参数
 # read1
 {SEQKIT} dup --times 2000 \
     {self.tmpdir}/target_reads_align.1.fq.gz \
@@ -231,6 +230,9 @@ class SimulateFastqByVcf:
         elif self.variant_allele_freq == 1:
             self.simulate_hom()
         # TODO 模拟杂合突变
+        elif self.variant_allele_freq < 1:
+            # self.simulate_het()
+            pass
         # TODO 开发完解除注释
         # self.remove_temporary_dir()
 
