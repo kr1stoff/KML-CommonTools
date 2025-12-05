@@ -337,8 +337,7 @@ cat {self.tmpdir}/wild_type.2.fq {self.tmpdir}/variant.2.fq | gzip --force > {se
             self.simulate_hom()
         else:
             self.simulate_het()
-        # TODO 开发完解除注释
-        # self.remove_temporary_dir()
+        self.remove_temporary_dir()
         logging.info(f"模拟测序数据完成.\n"
                      f"output_read1: {self.out_read1}\n"
                      f"output_read2: {self.out_read2}")
