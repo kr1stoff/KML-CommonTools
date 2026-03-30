@@ -56,3 +56,17 @@ poetry run python -m src.kml_commontools.rnaseq_ensg_convert_symbol \
     --mart-tab /data/mengxf/Database/reference/hg38/mart_export.txt \
     --output-file /data/mengxf/Temp/gene-symbol-count.tsv
 ```
+
+## 函数
+
+### 获取基因 ID
+
+输入基因列表, 返回基因 ID 映射字典.
+ `conda develop` 安装在了 `python3.12` 环境下，可直接导入使用：
+
+```python
+from gene_id_lookup import get_gene_ids
+
+gene_list = ["TP53", "BRCA1", "EGFR", "NOT_A_GENE", "P53"]
+mapping = get_gene_ids(gene_list, "/data/mengxf/Database/NCBI/gene/Homo_sapiens.gene_info")
+```

@@ -28,6 +28,13 @@ poetry run prep-input-from-bcl2fastq --input-dir /path/to/fastq --output-file in
 
 # 运行模块（未注册为命令的工具）
 poetry run python -m src.kml_commontools.<module_name>
+
+# 导入并使用 gene_id_lookup 函数（通过 conda develop 安装）
+import gene_id_lookup
+gene_mapping = gene_id_lookup.get_gene_ids(
+    ["TP53", "BRCA1", "EGFR"],
+    "/path/to/Homo_sapiens.gene_info"
+)
 ```
 
 ## 代码风格指南
@@ -59,10 +66,10 @@ from src.config.software import DWGSIM, SAMTOOLS
 
 ### 命名约定
 
-- **函数/变量**: snake_case（如 `simulate_fastq_by_vcf`）
+- **函数/变量**: snake\_case（如 `simulate_fastq_by_vcf`）
 - **类名**: PascalCase（如 `SimulateFastqByVcf`）
-- **常量**: UPPER_SNAKE_CASE（如 `DWGSIM`, `BWA`）
-- **模块文件**: snake_case（如 `prep_input_from_bcl2fastq.py`）
+- **常量**: UPPER\_SNAKE\_CASE（如 `DWGSIM`, `BWA`）
+- **模块文件**: snake\_case（如 `prep_input_from_bcl2fastq.py`）
 
 ### 类型注解
 
@@ -138,6 +145,7 @@ class SimulateConfig:
 src/
 ├── assets/           # 静态资源文件（模板等）
 ├── config/           # 配置文件（软件路径等）
+├── functions/        # 通用功能函数模块
 ├── kml_commontools/  # 主要工具模块
 │   ├── __init__.py
 │   ├── haobo_info_rec_to_samplesheet.py
@@ -146,6 +154,59 @@ src/
 │   └── ...
 └── util/             # 辅助脚本（Perl 等）
 ```
+
+## 基因ID查询函数
+
+`src/functions/gene_id_lookup.py` 提供了 `get_gene_ids` 函数，用于根据NCBI gene\_info文件查询基因名称对应的GeneID。
+
+### 函数说明
+
+```python
+def get_gene_ids(
+    gene_symbols: list[str],
+    gene_info_file: Union[str, Path],
+) -> dict[str, str]:
+    """根据NCBI gene_info文件查询基因名称对应的GeneID。
+
+    Args:
+        gene_symbols: 基因名称列表，可以是Symbol或Synonyms。
+        gene_info_file: NCBI gene_info文件路径。
+
+    Returns:
+        字典，键为输入的基因名称，值为对应的GeneID（字符串）。
+        如果某个基因名称未找到，则不包含在字典中。
+    """
+```
+
+### 使用示例
+
+```python
+import gene_id_lookup
+
+# 查询基因ID
+gene_symbols = ["TP53", "BRCA1", "EGFR", "P53"]
+gene_info_file = "/data/mengxf/Database/NCBI/gene/Homo_sapiens.gene_info"
+
+result = gene_id_lookup.get_gene_ids(gene_symbols, gene_info_file)
+# 输出: {"TP53": "7157", "BRCA1": "672", "EGFR": "1956", "P53": "7157"}
+
+for gene, gene_id in result.items():
+    print(f"{gene}: {gene_id}")
+```
+
+### 安装方式
+
+该模块已通过 `conda develop` 安装在 Python 3.12 环境下，可直接导入使用：
+
+```bash
+conda develop /data/mengxf/Agents/KML-CommonTools/src/functions
+```
+
+### 注意事项
+
+- 支持基因Symbol和Synonyms查询
+- 未找到的基因名称不会出现在结果字典中
+- 需要有效的NCBI gene\_info文件（可从NCBI下载）
 
 ## 测试
 
@@ -168,3 +229,6 @@ poetry run pytest tests/test_<name>.py
 - 所有 CLI 工具使用中文帮助信息
 - 处理 Excel 文件时注意忽略 openpyxl 的 UserWarning
 - 大文件操作建议使用流式处理，避免内存溢出
+- 基因ID查询函数位于 `src/functions/gene_id_lookup.py`，通过 `conda develop` 安装后可直接导入
+- 使用 `get_gene_ids` 函数时需要确保gene\_info文件路径正确
+
