@@ -178,6 +178,8 @@ def get_gene_ids(
     """
 ```
 
+人基因组基因信息文件在 `https://ftp.ncbi.nlm.nih.gov/gene/DATA/gene_info.gz` 下载
+
 ### 使用示例
 
 ```python
@@ -231,4 +233,3 @@ poetry run pytest tests/test_<name>.py
 - 大文件操作建议使用流式处理，避免内存溢出
 - 基因ID查询函数位于 `src/functions/gene_id_lookup.py`，通过 `conda develop` 安装后可直接导入
 - 使用 `get_gene_ids` 函数时需要确保gene\_info文件路径正确
-
