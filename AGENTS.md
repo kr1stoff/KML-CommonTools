@@ -187,9 +187,8 @@ import gene_id_lookup
 
 # 查询基因ID
 gene_symbols = ["TP53", "BRCA1", "EGFR", "P53"]
-gene_info_file = "/data/mengxf/Database/NCBI/gene/Homo_sapiens.gene_info"
 
-result = gene_id_lookup.get_gene_ids(gene_symbols, gene_info_file)
+result = gene_id_lookup.get_gene_ids(gene_symbols)
 # 输出: {"TP53": "7157", "BRCA1": "672", "EGFR": "1956", "P53": "7157"}
 
 for gene, gene_id in result.items():
@@ -204,6 +203,8 @@ for gene, gene_id in result.items():
 conda develop /data/mengxf/Agents/KML-CommonTools/src/functions
 ```
 
+路径记录在 `~/miniforge3/envs/python3.12/lib/python3.12/site-packages/conda.pth` 文件中
+
 ### 注意事项
 
 - 支持基因Symbol和Synonyms查询
@@ -215,14 +216,7 @@ conda develop /data/mengxf/Agents/KML-CommonTools/src/functions
 当前项目测试目录为 `tests/`，暂无自动化测试配置。如需添加测试：
 
 ```bash
-# 安装 pytest
-poetry add --group dev pytest
-
-# 运行测试
-poetry run pytest
-
-# 运行单个测试文件
-poetry run pytest tests/test_<name>.py
+poetry run python -m tests.test_gene_id_lookup
 ```
 
 ## 注意事项

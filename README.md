@@ -68,5 +68,5 @@ poetry run python -m src.kml_commontools.rnaseq_ensg_convert_symbol \
 from gene_id_lookup import get_gene_ids
 
 gene_list = ["TP53", "BRCA1", "EGFR", "NOT_A_GENE", "P53"]
-mapping = get_gene_ids(gene_list, "/data/mengxf/Database/NCBI/gene/Homo_sapiens.gene_info")
+mapping = get_gene_ids(gene_list)
 ```
