@@ -1,5 +1,13 @@
 # KML-CommonTools
 
+## 安装
+
+迁移后需要重新安装依赖
+
+```bash
+poetry install
+```
+
 ## 命令
 
 ### haobo_info_rec_to_samplesheet
