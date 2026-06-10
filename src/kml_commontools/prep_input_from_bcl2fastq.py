@@ -26,7 +26,7 @@ def prepare_input_from_bcl2fastq(input_dir: str, output_file: str):
     with open(output_file, "w") as f:
         for k, v in sorted(fqdict.items()):
             f.write(f"{k}\t{v["read1"]}\t{v["read2"]}\n")
-            
+
     logging.info(f"完成，共处理 {len(fqdict)} 个样本")
 
 
