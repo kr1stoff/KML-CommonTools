@@ -2,15 +2,26 @@ import click
 from pathlib import Path
 import logging
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
+
+
+def _setup_logging(log_file: str = None):
+    """配置日志，同时输出到控制台和可选的日志文件"""
+    handlers = [logging.StreamHandler()]
+    if log_file:
+        handlers.append(logging.FileHandler(log_file))
+    logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT, handlers=handlers)
+
 
 @click.command()
 @click.option("--input-dir", type=click.Path(exists=True), required=True,
               help="bcl2fastq 结果 fastq 文件夹, 按照 samplesheet 中的 sample_id 来定义样本名和分配 fastq")
 @click.option("--output-file", default="input.tsv", show_default=True, help="慢病毒分析流程输入文件")
+@click.option("--log-file", default=None, help="日志文件路径，日志信息将同时输出到控制台和日志文件")
 @click.help_option("--help", help="显示帮助信息并退出")
-def prepare_input_from_bcl2fastq(input_dir: str, output_file: str):
+def prepare_input_from_bcl2fastq(input_dir: str, output_file: str, log_file: str):
     """从 bcl2fastq 结果文件夹中提取样本信息，生成通用分析流程输入文件"""
+    _setup_logging(log_file)
     logging.info(f"从 bcl2fastq 结果文件夹 {input_dir} 中提取样本信息，生成通用分析流程输入文件 {output_file}")
 
     fqdict = {}
